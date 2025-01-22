@@ -1,46 +1,84 @@
 <?php
-session_start(); // Memulai session untuk menyimpan login status
+session_start(); // Memulai session
 
-// Koneksi ke database
-require_once 'db.php';
+// Konfigurasi database
+$host = "localhost";
+$user = "root"; // Ganti dengan username database Anda
+$password = ""; // Ganti dengan password database Anda
+$database = "gaji_dosen"; // Nama database Anda
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+// Membuat koneksi
+$conn = new mysqli($host, $user, $password, $database);
+
+// Cek koneksi
+if ($conn->connect_error) {
+    die("Koneksi gagal: " . $conn->connect_error);
+}
+
+// Jika pengguna sudah login, arahkan ke halaman home
+if (isset($_SESSION['username'])) {
+    header("Location: index.php");
+    exit();
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Mendapatkan input dari form
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    // Cek apakah username dan password sesuai dengan yang ada di database
-    $stmt = $pdo->prepare("SELECT * FROM Users WHERE username = :username AND password = :password");
-    $stmt->execute(['username' => $username, 'password' => $password]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Query untuk mengambil data pengguna berdasarkan username
+    $sql = "SELECT * FROM users WHERE username = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-    if ($user) {
-        // Jika login berhasil, simpan user id dan role dalam session
-        $_SESSION['user_id'] = $user['id_user'];
-        $_SESSION['role'] = $user['role']; // Simpan role pengguna (mahasiswa/dosen)
-        header("Location: index.php"); // Redirect ke halaman index setelah login
-        exit();
+    // Validasi jika username ditemukan dan password cocok
+    if ($result->num_rows > 0) {
+        $user = $result->fetch_assoc();
+        
+        // Periksa apakah password cocok (gunakan password_verify jika password dienkripsi)
+        if ($password === $user['password']) {
+            // Menyimpan username ke session
+            $_SESSION['username'] = $username;
+            header("Location: index.php");
+            exit();
+        } else {
+            $error_message = "Password salah!";
+        }
     } else {
-        // Jika login gagal, tampilkan pesan error
-        $error_message = 'Username atau Password salah!';
+        $error_message = "Username tidak ditemukan!";
     }
+
+    // Tutup koneksi
+    $stmt->close();
 }
+
+// Menutup koneksi database
+$conn->close();
 ?>
 
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+    <link rel="stylesheet" href="style.css">
 </head>
+<style></style>
 <body>
-    <h2>Login</h2>
-    <?php if (isset($error_message)) { echo "<p style='color:red;'>$error_message</p>"; } ?>
-    <form method="POST" action="login.php">
-        <label>Username:</label>
-        <input type="text" name="username" required><br><br>
-        <label>Password:</label>
-        <input type="password" name="password" required><br><br>
+    <h3>Login</h3>
+    <?php if (isset($error_message)): ?>
+        <p style="color: red;"><?= $error_message; ?></p>
+    <?php endif; ?>
+    <form method="post" action="">
+        <label for="username">Username: </label>
+        <input type="text" id="username" name="username" required>
+        <br>
+        <label for="password">Password: </label>
+        <input type="password" id="password" name="password" required>
+        <br>
         <button type="submit">Login</button>
     </form>
 </body>
