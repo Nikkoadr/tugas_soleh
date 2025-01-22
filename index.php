@@ -9,30 +9,29 @@ if (!isset($_SESSION['username'])) {
 
 $username = $_SESSION['username']; // Ambil username dari session
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home</title>
-    <link rel="stylesheet" href="style.css">
+    <!-- Impor Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
     <!-- Navbar -->
-    <nav>
-        <ul>
-            <li><a href="index.php">Home</a></li>
-            <li><a href="fakultas.php">Fakultas</a></li>
-            <li><a href="jurusan.php">Jurusan</a></li>
-            <li><a href="dosen.php">Dosen</a></li>
-            <li><a href="mahasiswa.php">Mahasiswa</a></li>
-            <li><a href="pembayaran.php">Pembayaran</a></li>
-            <li><a href="laporan.php">Laporan</a></li>
-        </ul>
-    </nav>
+    <?php include 'navbar.php'; ?>
 
     <!-- Konten -->
-    <h3>Selamat datang, <?= htmlspecialchars($username); ?>!</h3>
-    <p><a href="logout.php">Logout</a></p>
+    <div class="container mt-5">
+        <div class="alert alert-success" role="alert">
+            <h3>Selamat datang, <?= htmlspecialchars($username); ?>!</h3>
+            <p>Anda telah berhasil login ke sistem.</p>
+        </div>
+    </div>
+
+    <!-- Impor Bootstrap JS (Optional, jika diperlukan untuk beberapa komponen interaktif) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

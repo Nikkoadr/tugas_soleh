@@ -1,57 +1,29 @@
 <?php
-session_start(); // Memulai session
+include 'db.php';
 
-// Konfigurasi database
-$host = "localhost";
-$user = "root"; // Ganti dengan username database Anda
-$password = ""; // Ganti dengan password database Anda
-$database = "gaji_dosen"; // Nama database Anda
-
-// Membuat koneksi
-$conn = new mysqli($host, $user, $password, $database);
-
-// Cek koneksi
-if ($conn->connect_error) {
-    die("Koneksi gagal: " . $conn->connect_error);
-}
-
-// Jika pengguna sudah login, arahkan ke halaman home
+// Jika pengguna sudah login, arahkan ke halaman index
 if (isset($_SESSION['username'])) {
     header("Location: index.php");
     exit();
 }
 
+// Proses saat form dikirim
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Mendapatkan input dari form
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    // Query untuk mengambil data pengguna berdasarkan username
-    $sql = "SELECT * FROM users WHERE username = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    // Query tanpa prepared statement (tidak aman)
+    $sql = "SELECT * FROM users WHERE username = '$username' AND password = '$password'";
+    $result = $conn->query($sql);
 
-    // Validasi jika username ditemukan dan password cocok
+    // Validasi jika user ditemukan
     if ($result->num_rows > 0) {
-        $user = $result->fetch_assoc();
-        
-        // Periksa apakah password cocok (gunakan password_verify jika password dienkripsi)
-        if ($password === $user['password']) {
-            // Menyimpan username ke session
-            $_SESSION['username'] = $username;
-            header("Location: index.php");
-            exit();
-        } else {
-            $error_message = "Password salah!";
-        }
+        $_SESSION['username'] = $username;  // Simpan session
+        header("Location: index.php");  // Redirect ke halaman utama
+        exit();
     } else {
-        $error_message = "Username tidak ditemukan!";
+        $error_message = "Username atau password salah!";
     }
-
-    // Tutup koneksi
-    $stmt->close();
 }
 
 // Menutup koneksi database
@@ -64,22 +36,92 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        h3 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .error-message {
+            color: red;
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            text-align: left;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
-<style></style>
 <body>
-    <h3>Login</h3>
-    <?php if (isset($error_message)): ?>
-        <p style="color: red;"><?= $error_message; ?></p>
-    <?php endif; ?>
-    <form method="post" action="">
-        <label for="username">Username: </label>
-        <input type="text" id="username" name="username" required>
-        <br>
-        <label for="password">Password: </label>
-        <input type="password" id="password" name="password" required>
-        <br>
-        <button type="submit">Login</button>
-    </form>
+    <div class="container">
+        <h3>Login</h3>
+
+        <?php if (isset($error_message)): ?>
+            <p class="error-message"><?= $error_message; ?></p>
+        <?php endif; ?>
+
+        <form method="post" action="">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+            
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            
+            <button type="submit">Login</button>
+        </form>
+    </div>
 </body>
 </html>

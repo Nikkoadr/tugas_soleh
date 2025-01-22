@@ -23,7 +23,7 @@ CREATE TABLE Users (
     nama VARCHAR(100) NOT NULL,
     username VARCHAR(50) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    role ENUM('mahasiswa', 'dosen') NOT NULL
+    role ENUM('admin','tu','dosen','mahasiswa') NOT NULL
 );
 
 -- Tabel Mahasiswa
@@ -47,7 +47,7 @@ CREATE TABLE Dosen (
 );
 
 -- Tabel GajiDosen
-CREATE TABLE GajiDosen (
+CREATE TABLE gaji_dosen (
     id_gaji INT AUTO_INCREMENT PRIMARY KEY,
     id_dosen INT NOT NULL,
     jumlah_gaji DECIMAL(15, 2) NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE GajiDosen (
 );
 
 -- Tabel BayaranMahasiswa
-CREATE TABLE BayaranMahasiswa (
+CREATE TABLE bayaran_mahasiswa (
     id_bayaran INT AUTO_INCREMENT PRIMARY KEY,
     id_mahasiswa INT NOT NULL,
     jumlah_bayaran DECIMAL(15, 2) NOT NULL,
@@ -65,17 +65,10 @@ CREATE TABLE BayaranMahasiswa (
 );
 
 -- Tabel Laporan (modifikasi untuk mendukung transaksi mahasiswa dan dosen)
-CREATE TABLE Laporan (
-    id_laporan INT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE log (
+    id_log INT AUTO_INCREMENT PRIMARY KEY,
     deskripsi_laporan TEXT NOT NULL,
-    tanggal_laporan DATE NOT NULL,
-    id_dosen INT,
-    id_mahasiswa INT,
-    id_bayaran INT, -- Menyimpan ID bayaran jika laporan terkait dengan pembayaran
-    tipe_laporan ENUM('transaksi_bayaran', 'aktivitas_dosen') NOT NULL, -- Untuk membedakan laporan tipe
-    FOREIGN KEY (id_dosen) REFERENCES Dosen(id_dosen),
-    FOREIGN KEY (id_mahasiswa) REFERENCES Mahasiswa(id_mahasiswa),
-    FOREIGN KEY (id_bayaran) REFERENCES BayaranMahasiswa(id_bayaran)
+    tanggal DATE NOT NULL
 );
 
 -- Menambahkan data pada tabel Fakultas
@@ -99,9 +92,9 @@ VALUES
 -- Menambahkan data pada tabel Users (nama dan username satu kata)
 INSERT INTO Users (nama, username, password, role)
 VALUES
-('Budi', 'budi', 'password1', 'mahasiswa'),
-('Ani', 'ani', 'password2', 'mahasiswa'),
-('Dono', 'dono', 'password3', 'mahasiswa'),
+('Budi', 'budi', 'password1', 'admin'),
+('Ani', 'ani', 'password2', 'tu'),
+('Dono', 'dono', 'password3', 'tu'),
 ('Rita', 'rita', 'password4', 'mahasiswa'),
 ('Irwan', 'irwan', 'password5', 'mahasiswa'),
 ('Mohammad', 'mohammad', 'password6', 'dosen'),
@@ -113,9 +106,6 @@ VALUES
 -- Menambahkan data pada tabel Mahasiswa
 INSERT INTO Mahasiswa (id_user, nim, id_jurusan)
 VALUES
-(1, 'M001', 1),
-(2, 'M002', 2),
-(3, 'M003', 3),
 (4, 'M004', 4),
 (5, 'M005', 5);
 
@@ -128,68 +118,16 @@ VALUES
 (9, 'D004', 4),
 (10, 'D005', 5);
 
--- Menambahkan data pada tabel GajiDosen
-INSERT INTO GajiDosen (id_dosen, jumlah_gaji, tanggal_pembayaran)
-VALUES
-(1, 10000000.00, '2025-01-05'),
-(2, 9500000.00, '2025-01-05'),
-(3, 12000000.00, '2025-01-05'),
-(4, 10500000.00, '2025-01-05'),
-(5, 13000000.00, '2025-01-05');
-
--- Menambahkan data pada tabel BayaranMahasiswa
-INSERT INTO BayaranMahasiswa (id_mahasiswa, jumlah_bayaran, tanggal_pembayaran)
-VALUES
-(1, 5000000.00, '2025-01-07'),
-(2, 4500000.00, '2025-01-07'),
-(3, 5500000.00, '2025-01-07'),
-(4, 6000000.00, '2025-01-07'),
-(5, 6500000.00, '2025-01-07');
-
--- Menambahkan data pada tabel Laporan untuk pembayaran mahasiswa
-INSERT INTO Laporan (deskripsi_laporan, tanggal_laporan, id_mahasiswa, id_bayaran, tipe_laporan)
-VALUES
-('Pembayaran sebesar 5000000 untuk mahasiswa NIM M001', '2025-01-07', 1, 1, 'transaksi_bayaran'),
-('Pembayaran sebesar 4500000 untuk mahasiswa NIM M002', '2025-01-07', 2, 2, 'transaksi_bayaran');
-
--- Menambahkan data pada tabel Laporan untuk aktivitas dosen (gaji)
-INSERT INTO Laporan (deskripsi_laporan, tanggal_laporan, id_dosen, tipe_laporan)
-VALUES
-('Pembayaran gaji sebesar 10000000 untuk dosen NIDN D001', '2025-01-05', 1, 'aktivitas_dosen'),
-('Pembayaran gaji sebesar 9500000 untuk dosen NIDN D002', '2025-01-05', 2, 'aktivitas_dosen');
-
--- Trigger untuk mencatat pembayaran mahasiswa ke dalam Laporan
 DELIMITER //
 
-CREATE TRIGGER after_mahasiswa_payment
-AFTER INSERT ON BayaranMahasiswa
+CREATE TRIGGER after_bayaran_mahasiswa
+AFTER INSERT ON bayaran_mahasiswa
 FOR EACH ROW
 BEGIN
-    INSERT INTO Laporan (deskripsi_laporan, tanggal_laporan, id_mahasiswa, id_bayaran, tipe_laporan)
+    INSERT INTO log (deskripsi_laporan, tanggal)
     VALUES (
-        CONCAT('Pembayaran sebesar ', NEW.jumlah_bayaran, ' untuk mahasiswa NIM ', NEW.id_mahasiswa),
-        NEW.tanggal_pembayaran,
-        NEW.id_mahasiswa,
-        NEW.id_bayaran,
-        'transaksi_bayaran'
-    );
-END //
-
-DELIMITER ;
-
--- Trigger untuk mencatat pembayaran gaji dosen ke dalam Laporan
-DELIMITER //
-
-CREATE TRIGGER after_dosen_salary_payment
-AFTER INSERT ON GajiDosen
-FOR EACH ROW
-BEGIN
-    INSERT INTO Laporan (deskripsi_laporan, tanggal_laporan, id_dosen, tipe_laporan)
-    VALUES (
-        CONCAT('Pembayaran gaji sebesar ', NEW.jumlah_gaji, ' untuk dosen NIDN ', NEW.id_dosen),
-        NEW.tanggal_pembayaran,
-        NULL,
-        'aktivitas_dosen'
+        CONCAT('Pembayaran sebesar ', NEW.jumlah_bayaran, ' untuk mahasiswa dengan ID ', NEW.id_mahasiswa, ' pada tanggal ', NEW.tanggal_pembayaran),
+        NEW.tanggal_pembayaran
     );
 END //
 

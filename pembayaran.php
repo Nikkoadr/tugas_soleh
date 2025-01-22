@@ -1,17 +1,5 @@
 <?php 
-// Konfigurasi database
-$host = "localhost";
-$user = "root"; // Ganti dengan username database Anda
-$password = ""; // Ganti dengan password database Anda
-$database = "gaji_dosen"; // Nama database
-
-// Membuat koneksi ke database
-$conn = new mysqli($host, $user, $password, $database);
-
-// Cek koneksi
-if ($conn->connect_error) {
-    die("Koneksi gagal: " . $conn->connect_error);
-}
+include 'db.php';
 
 // Cek apakah pengguna sudah login
 session_start();
@@ -28,60 +16,67 @@ $username = $_SESSION['username'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pembayaran Mahasiswa</title>
-    <link rel="stylesheet" href="style.css">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
     <!-- Navbar -->
-    <nav>
-        <ul>
-            <li><a href="index.php">Home</a></li>
-            <li><a href="fakultas.php">Fakultas</a></li>
-            <li><a href="jurusan.php">Jurusan</a></li>
-            <li><a href="dosen.php">Dosen</a></li>
-            <li><a href="mahasiswa.php">Mahasiswa</a></li>
-            <li><a href="pembayaran.php">Pembayaran</a></li>
-            <li><a href="laporan.php">Laporan</a></li>
-        </ul>
-    </nav>
+    <?php include 'navbar.php'; ?>
 
     <!-- Konten -->
-    <h3>Data Pembayaran Mahasiswa</h3>
-    <table border="1" cellpadding="10" cellspacing="0">
-        <thead>
-            <tr>
-                <th>ID Bayaran</th>
-                <th>ID Mahasiswa</th>
-                <th>Jumlah Bayaran</th>
-                <th>Tanggal Pembayaran</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php
-            // Query untuk mengambil data pembayaran mahasiswa
-            $sql = "SELECT * FROM BayaranMahasiswa";
-            $result = $conn->query($sql);
+    <div class="container mt-4">
+        <h3>Data Pembayaran Mahasiswa</h3>
 
-            if (!$result) {
-                die("Query gagal: " . $conn->error);
-            }
+        <!-- Tombol Tambah Pembayaran -->
+        <a href="tambah_pembayaran.php" class="btn btn-success mb-3">Tambah Pembayaran</a>
 
-            if ($result->num_rows > 0) {
-                // Output data dari setiap baris
-                while ($row = $result->fetch_assoc()) {
-                    echo "<tr>";
-                    echo "<td>" . $row['id_bayaran'] . "</td>";
-                    echo "<td>" . $row['id_mahasiswa'] . "</td>";
-                    echo "<td>Rp " . number_format($row['jumlah_bayaran'], 2, ',', '.') . "</td>";
-                    echo "<td>" . $row['tanggal_pembayaran'] . "</td>";
-                    echo "</tr>";
-                }
-            } else {
-                echo "<tr><td colspan='4'>Tidak ada data pembayaran.</td></tr>";
-            }
-            ?>
-        </tbody>
-    </table>
+        <!-- Tabel Data Pembayaran -->
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>ID Mahasiswa</th>
+                    <th>Jumlah Bayaran</th>
+                    <th>Tanggal Pembayaran</th>
+                    <th>Aksi</th> <!-- Kolom Aksi untuk Edit dan Hapus -->
+                </tr>
+            </thead>
+                <tbody>
+                    <?php
+                    // Query untuk mengambil data pembayaran mahasiswa dengan JOIN ke tabel users
+                    $sql = "
+                        SELECT BayaranMahasiswa.id_bayaran, BayaranMahasiswa.id_mahasiswa, BayaranMahasiswa.jumlah_bayaran, BayaranMahasiswa.tanggal_pembayaran, users.nama AS nama_mahasiswa
+                        FROM BayaranMahasiswa
+                        INNER JOIN users ON BayaranMahasiswa.id_mahasiswa = users.id_user
+                    ";
+                    $result = $conn->query($sql);
 
-    <p><a href="logout.php">Logout</a></p>
+                    if ($result && $result->num_rows > 0) {
+                        while ($row = $result->fetch_assoc()) {
+                            ?>
+                            <tr>
+                                <td><?= $row['nama_mahasiswa']; ?></td> <!-- Menampilkan nama mahasiswa -->
+                                <td>Rp <?= number_format($row['jumlah_bayaran'], 2, ',', '.'); ?></td>
+                                <td><?= $row['tanggal_pembayaran']; ?></td>
+                                <td>
+                                    <a href="edit_pembayaran.php?id=<?= $row['id_bayaran']; ?>" class="btn btn-warning btn-sm">Edit</a>
+                                    <a href="hapus_pembayaran.php?id=<?= $row['id_bayaran']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus pembayaran ini?');">Hapus</a>
+                                </td>
+                            </tr>
+                            <?php
+                        }
+                    } else {
+                        ?>
+                        <tr>
+                            <td colspan="5" class="text-center">Tidak ada data pembayaran.</td>
+                        </tr>
+                        <?php
+                    }
+                    ?>
+                </tbody>
+        </table>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

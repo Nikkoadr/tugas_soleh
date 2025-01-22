@@ -1,25 +1,16 @@
 <?php 
-// Konfigurasi database
-$host = "localhost";
-$user = "root"; // Ganti dengan username database Anda
-$password = ""; // Ganti dengan password database Anda
-$database = "gaji_dosen"; // Nama database
+include 'db.php'; // Mengimpor koneksi database
 
-// Membuat koneksi
-$conn = new mysqli($host, $user, $password, $database);
+// Cek apakah ada pencarian
+$cari = isset($_GET['cari']) ? $_GET['cari'] : '';
 
-// Cek koneksi
-if ($conn->connect_error) {
-    die("Koneksi gagal: " . $conn->connect_error);
-}
-
-// Query untuk mengambil data dosen dengan INNER JOIN
+// Query untuk mengambil data dosen dengan INNER JOIN dan pencarian
 $sql = "
-    SELECT users.nama AS nama_dosen, jurusan.nama_jurusan, dosen.nidn 
+    SELECT dosen.id_dosen, users.nama AS nama_dosen, jurusan.nama_jurusan, dosen.nidn 
     FROM dosen
     INNER JOIN users ON dosen.id_user = users.id_user
     INNER JOIN jurusan ON dosen.id_jurusan = jurusan.id_jurusan
-"; // Pastikan nama tabel dan kolom sesuai
+    WHERE users.nama LIKE '%$cari%' OR jurusan.nama_jurusan LIKE '%$cari%'"; 
 
 $result = $conn->query($sql);
 
@@ -40,45 +31,66 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar Dosen</title>
-    <link rel="stylesheet" href="style.css">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
     <!-- Navbar -->
-    <nav>
-        <ul>
-            <li><a href="index.php">Home</a></li>
-            <li><a href="fakultas.php">Fakultas</a></li>
-            <li><a href="jurusan.php">Jurusan</a></li>
-            <li><a href="dosen.php">Dosen</a></li>
-            <li><a href="mahasiswa.php">Mahasiswa</a></li>
-            <li><a href="pembayaran.php">Pembayaran</a></li>
-            <li><a href="laporan.php">Laporan</a></li>
-        </ul>
-    </nav>
+    <?php include 'navbar.php'; ?>
 
     <!-- Konten -->
-    <h3>Daftar Dosen</h3>
-    <table>
-        <tr>
-            <th>No</th>
-            <th>Nama Dosen</th>
-            <th>Jurusan</th>
-            <th>NIDN</th>
-        </tr>
-        <?php if (!empty($dosen)): ?>
-            <?php foreach ($dosen as $index => $data_dosen): ?>
+    <div class="container mt-4">
+        <h3>Daftar Dosen</h3>
+
+        <!-- Form Pencarian Dosen -->
+        <form class="mb-3" method="get" action="dosen.php">
+            <div class="input-group">
+                <input type="text" class="form-control" name="cari" placeholder="Cari Dosen atau Jurusan" value="<?= htmlspecialchars($cari); ?>">
+                <button class="btn btn-primary" type="submit">Cari</button>
+            </div>
+        </form>
+
+        <!-- Tombol Tambah Dosen -->
+        <a href="tambah_dosen.php" class="btn btn-success mb-3">Tambah Dosen</a>
+
+        <!-- Tabel Data Dosen -->
+        <table class="table table-bordered">
+            <thead>
                 <tr>
-                    <td><?= $index + 1; ?></td>
-                    <td><?= htmlspecialchars($data_dosen['nama_dosen']); ?></td>
-                    <td><?= htmlspecialchars($data_dosen['nama_jurusan']); ?></td>
-                    <td><?= htmlspecialchars($data_dosen['nidn']); ?></td>
+                    <th>No</th>
+                    <th>Nama Dosen</th>
+                    <th>Jurusan</th>
+                    <th>NIDN</th>
+                    <th>Aksi</th> <!-- Kolom Aksi untuk Edit dan Hapus -->
                 </tr>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <tr>
-                <td colspan="4">Tidak ada data dosen yang ditemukan.</td>
-            </tr>
-        <?php endif; ?>
-    </table>
+            </thead>
+            <tbody>
+                <?php if (!empty($dosen)): ?>
+                    <?php foreach ($dosen as $index => $data_dosen): ?>
+                        <tr>
+                            <td><?= $index + 1; ?></td>
+                            <td><?= htmlspecialchars($data_dosen['nama_dosen']); ?></td>
+                            <td><?= htmlspecialchars($data_dosen['nama_jurusan']); ?></td>
+                            <td><?= htmlspecialchars($data_dosen['nidn']); ?></td>
+                            <td>
+                                <!-- Tombol Edit -->
+                                <a href="edit_dosen.php?id=<?= $data_dosen['id_dosen']; ?>" class="btn btn-warning btn-sm">Edit</a>
+                                
+                                <!-- Tombol Hapus -->
+                                <a href="hapus_dosen.php?id=<?= $data_dosen['id_dosen']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus dosen ini?');">Hapus</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="5" class="text-center">Tidak ada data dosen yang ditemukan.</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
