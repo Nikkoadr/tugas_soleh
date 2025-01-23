@@ -1,34 +1,41 @@
 <?php
 include 'db.php';
+session_start();
 
-// Jika pengguna sudah login, arahkan ke halaman index
 if (isset($_SESSION['username'])) {
     header("Location: index.php");
     exit();
 }
 
-// Proses saat form dikirim
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    // Query tanpa prepared statement (tidak aman)
-    $sql = "SELECT * FROM users WHERE username = '$username' AND password = '$password'";
-    $result = $conn->query($sql);
+    $stmt = $conn->prepare("SELECT * FROM users WHERE username = ? AND password = ?");
+    $stmt->bind_param("ss", $username, $password);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-    // Validasi jika user ditemukan
     if ($result->num_rows > 0) {
-        $_SESSION['username'] = $username;  // Simpan session
-        header("Location: index.php");  // Redirect ke halaman utama
+        $user = $result->fetch_assoc();
+        
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['role'] = $user['role'];
+        $_SESSION['nama'] = $user['nama'];
+        
+        header("Location: index.php");
         exit();
     } else {
         $error_message = "Username atau password salah!";
     }
+
+    $stmt->close();
 }
 
-// Menutup koneksi database
 $conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">

@@ -44,9 +44,9 @@ $username = $_SESSION['username'];
                     <?php
                     // Query untuk mengambil data pembayaran mahasiswa dengan JOIN ke tabel users
                     $sql = "
-                        SELECT BayaranMahasiswa.id_bayaran, BayaranMahasiswa.id_mahasiswa, BayaranMahasiswa.jumlah_bayaran, BayaranMahasiswa.tanggal_pembayaran, users.nama AS nama_mahasiswa
-                        FROM BayaranMahasiswa
-                        INNER JOIN users ON BayaranMahasiswa.id_mahasiswa = users.id_user
+                        SELECT bayaran_mahasiswa.id_bayaran, bayaran_mahasiswa.id_mahasiswa, bayaran_mahasiswa.jumlah_bayaran, bayaran_mahasiswa.tanggal_pembayaran, users.nama AS nama_mahasiswa
+                        FROM bayaran_mahasiswa
+                        INNER JOIN users ON bayaran_mahasiswa.id_mahasiswa = users.id_user
                     ";
                     $result = $conn->query($sql);
 

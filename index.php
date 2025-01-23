@@ -7,7 +7,7 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
-$username = $_SESSION['username']; // Ambil username dari session
+$nama = $_SESSION['nama']; // Ambil username dari session
 ?>
 
 <!DOCTYPE html>
@@ -26,7 +26,7 @@ $username = $_SESSION['username']; // Ambil username dari session
     <!-- Konten -->
     <div class="container mt-5">
         <div class="alert alert-success" role="alert">
-            <h3>Selamat datang, <?= htmlspecialchars($username); ?>!</h3>
+            <h3>Selamat datang, <?= htmlspecialchars($nama); ?>!</h3>
             <p>Anda telah berhasil login ke sistem.</p>
         </div>
     </div>

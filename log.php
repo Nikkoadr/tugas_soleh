@@ -8,7 +8,6 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
-$username = $_SESSION['username'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -47,20 +46,17 @@ $username = $_SESSION['username'];
             <tbody>
                 <?php
                 // Query untuk mengambil data laporan
-                $sql_laporan = "SELECT * FROM Laporan";
+                $sql_laporan = "SELECT * FROM log";
                 $result_laporan = $conn->query($sql_laporan);
 
                 if ($result_laporan && $result_laporan->num_rows > 0) {
                     while ($row = $result_laporan->fetch_assoc()) {
                         ?>
                         <tr>
-                            <td><?= $row['id_laporan']; ?></td>
+                            <td><?= $row['id_log']; ?></td>
                             <td><?= $row['deskripsi_laporan']; ?></td>
-                            <td><?= date("d-m-Y", strtotime($row['tanggal_laporan'])); ?></td>
-                            <td><?= $row['tipe_laporan']; ?></td>
-                            <td><?= $row['id_dosen']; ?></td>
-                            <td><?= $row['id_mahasiswa']; ?></td>
-                            <td><?= $row['id_bayaran']; ?></td>
+                            <td><?= date("d-m-Y", strtotime($row['tanggal'])); ?></td>
+
                             <td>
                                 <!-- Tombol Edit dan Hapus -->
                                 <a href="edit_laporan.php?id=<?= $row['id_laporan']; ?>" class="btn btn-warning btn-sm">Edit</a>
